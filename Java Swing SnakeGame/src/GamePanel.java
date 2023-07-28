@@ -1,10 +1,11 @@
 import javax.swing.*;
+import java.awt.event.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import java.awt.*;
-import java.awt.event.*;
+import java.io.*;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 public class GamePanel extends JPanel
 {
@@ -28,6 +29,7 @@ public class GamePanel extends JPanel
     Color randomColor;
     private JButton startButton = new JButton("Start game");
     private JButton leaderboardButton = new JButton("Leaderboard");
+    private JButton exitButton = new JButton("Exit");
     private JSlider speedSlider = new JSlider(20, 100, 70);
     private JLabel speedLabel = new JLabel("Set your game speed:");
     /* 
@@ -41,7 +43,9 @@ public class GamePanel extends JPanel
         this.setPreferredSize(new Dimension(screenSize, screenSize));
         this.setBackground(Color.BLACK);
         
-        setButtons();
+        setMenuButtons();
+        xSnakeHead=xSnakeHead-xSnakeHead%unitSize;
+        ySnakeHead=ySnakeHead-ySnakeHead%unitSize;
 
         this.addKeyListener(new KeyAdapter() 
         {
@@ -51,9 +55,6 @@ public class GamePanel extends JPanel
                 keyClick(e);
             }
         });
-
-        xSnakeHead=xSnakeHead-xSnakeHead%unitSize;
-        ySnakeHead=ySnakeHead-ySnakeHead%unitSize;
 
         gameTimer = new Timer(gameSpeed, new ActionListener() 
         {
@@ -84,7 +85,7 @@ public class GamePanel extends JPanel
         else if(gameLost==true)
         {
             g2D.setColor(Color.RED);
-            g2D.drawString("YOU LOSE NOOB", (screenSize-metrics.stringWidth("YOU LOSE NOOB"))/2, screenSize/2);
+            g2D.drawString("YOU LOSE", (screenSize-metrics.stringWidth("YOU LOSE"))/2, screenSize/2);
         }
     }
 
@@ -108,8 +109,21 @@ public class GamePanel extends JPanel
 
     public void nextApple()
     {
-        xApple=random.nextInt(screenSize);
-        yApple=random.nextInt(screenSize);
+        boolean collisionWithSeg=true;
+        while(collisionWithSeg==true) //while there is collision with snake segment
+        {
+            collisionWithSeg=false;
+            xApple=random.nextInt(screenSize);
+            yApple=random.nextInt(screenSize);
+            for(int i=0; i<score; i++)
+            {
+                if(xApple/unitSize==xSeg[i]/unitSize && yApple/unitSize==ySeg[i]/unitSize) //checking apple and snake segment rows and columns
+                {
+                    collisionWithSeg=true;
+                    break;
+                }
+            }
+        }
     }
 
     public void moveSnake()
@@ -190,7 +204,7 @@ public class GamePanel extends JPanel
         repaint();
     }
 
-    public void setButtons()
+    public void setMenuButtons()
     {
         GridLayout grid = new GridLayout(2, 1);
         this.add(startButton, grid);
@@ -198,12 +212,12 @@ public class GamePanel extends JPanel
         startButton.setBackground(Color.BLUE);
         startButton.setFocusable(false);
         startButton.setFont(gameFont);
-        startButton.addActionListener(new ActionListener() {
+        startButton.addActionListener(new ActionListener() 
+        {
             @Override
             public void actionPerformed(ActionEvent e) 
             {
                 startGame();
-                gameTimer.start();
             }
         });
 
@@ -212,6 +226,16 @@ public class GamePanel extends JPanel
         leaderboardButton.setBackground(Color.BLUE);
         leaderboardButton.setFocusable(false);
         leaderboardButton.setFont(gameFont);
+        leaderboardButton.addActionListener(new ActionListener() 
+        {
+            @Override
+            public void actionPerformed(ActionEvent e) 
+            {
+                setMenuVisible(false);
+                createLeaderboard();
+            }
+            
+        });
 
         this.add(speedLabel, grid);
         speedLabel.setPreferredSize(new Dimension(400, 100));
@@ -236,39 +260,193 @@ public class GamePanel extends JPanel
                 gameSpeed=((JSlider)e.getSource()).getValue();
                 gameTimer.setDelay(gameSpeed);
             }
+        });
+
+        this.add(exitButton, grid);
+        exitButton.setPreferredSize(new Dimension(400, 100));
+        exitButton.setBackground(Color.BLUE);
+        exitButton.setFocusable(false);
+        exitButton.setFont(gameFont);
+        exitButton.addActionListener(new ActionListener() 
+        {
+            @Override
+            public void actionPerformed(ActionEvent e) 
+            {
+                System.exit(0);
+            }
             
         });
     }
 
-    public void setButtonsOff()
+    public void setMenuVisible(boolean s)
     {
-        startButton.setVisible(false);
-        startButton.setEnabled(false);
+        startButton.setVisible(s);
+        startButton.setEnabled(s);
 
-        leaderboardButton.setVisible(false);
-        leaderboardButton.setEnabled(false);
+        leaderboardButton.setVisible(s);
+        leaderboardButton.setEnabled(s);
 
-        speedSlider.setVisible(false);
-        speedSlider.setEnabled(false);
+        speedSlider.setVisible(s);
+        speedSlider.setEnabled(s);
 
-        speedLabel.setVisible(false);
-        speedLabel.setEnabled(false);
+        speedLabel.setVisible(s);
+        speedLabel.setEnabled(s);
+
+        exitButton.setVisible(s);
+        exitButton.setEnabled(s);
     }
 
-    public void ongoingGame()
+    public void createLeaderboard()
     {
-        moveSnake();
-        repaint();
-        checkBorderCollisions();
-        checkAppleCollision();
-        checkSegmentCollisions();
+        JLabel[] playerLabels = new JLabel[5];
+        JLabel topLabel = new JLabel("Top players:");
+        JButton backButton = new JButton("Back");
+        JPanel panel = this;
+        GridLayout grid = new GridLayout(5, 1);
+
+        this.add(topLabel, grid);
+        topLabel.setPreferredSize(new Dimension(600, 80));
+        topLabel.setOpaque(true);
+        topLabel.setBackground(Color.BLUE);
+        topLabel.setFocusable(false);
+        topLabel.setHorizontalAlignment(SwingConstants.CENTER);//Centering label
+        topLabel.setFont(new Font("Ink Free", Font.BOLD, 40));
+        
+        for(int i=0; i<5; i++)
+        {
+            playerLabels[i] = new JLabel();
+            this.add(playerLabels[i], grid);
+            playerLabels[i].setPreferredSize(new Dimension(600, 80));
+            playerLabels[i].setOpaque(true);
+            playerLabels[i].setBackground(Color.BLUE);
+            playerLabels[i].setFocusable(false);
+            playerLabels[i].setHorizontalAlignment(SwingConstants.CENTER);//Centering label
+            playerLabels[i].setFont(new Font("Ink Free", Font.BOLD, 30));
+        }
+        readPlayerScores(playerLabels);
+        this.add(backButton, grid);
+        backButton.setPreferredSize(new Dimension(400, 80));
+        backButton.setBackground(Color.BLUE);
+        backButton.setFocusable(false);
+        backButton.setFont(gameFont);
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                panel.remove(topLabel);
+                for(int i=0; i<5; i++) panel.remove(playerLabels[i]);
+                panel.remove(backButton);
+                setMenuVisible(true);
+                panel.revalidate();
+                panel.repaint();
+            }
+        });
     }
 
-    public void startGame()
+    public void savePlayerScore(String nick) 
     {
-        this.requestFocusInWindow(true);
-        setButtonsOff();
-        gameLost=false;
+        try 
+        {
+            PrintWriter out = new PrintWriter(new FileWriter("Scores.txt", true));
+            out.println(nick+";"+score+";"+gameSpeed);
+            out.close();
+        } 
+        catch (IOException e) 
+        {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void readPlayerScores(JLabel[] playerLabels)
+    {
+        try 
+        {
+            BufferedReader in = new BufferedReader(new FileReader("Scores.txt"));
+            String line;
+            StringTokenizer tokens;
+            for(int j=0; j<5; j++)
+            {
+                line = in.readLine();
+                tokens = new StringTokenizer(line, ";");
+                String nick = tokens.nextToken();
+                String scoreFromFile = tokens.nextToken();
+                String speedFromFile = tokens.nextToken();
+                playerLabels[j].setText(j+1+". "+nick+" score: "+scoreFromFile+" with speed "+speedFromFile);
+            } 
+            in.close();
+        } 
+        catch (IOException e) 
+        {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void createSaveFrame()
+    {
+        JFrame frame = new JFrame();
+        JPanel panel = new JPanel();
+        JPanel bottomPanel = new JPanel();
+        JButton saveButton = new JButton("Save your score");
+        JButton noButton = new JButton("No thanks");
+        JLabel saveLabel = new JLabel("Write your nick:");
+        JTextArea textArea = new JTextArea("");
+
+        saveLabel.setFont(new Font("Ink Free", Font.BOLD, 40));
+        saveLabel.setBackground(Color.BLUE);
+        saveLabel.setOpaque(true);
+        saveLabel.setFocusable(false);
+        saveLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        textArea.setFont(new Font("Ink Free", Font.BOLD, 50));
+        textArea.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                if(textArea.getText().length()>13) e.consume();
+            }
+        });
+
+        saveButton.setFont(new Font("Ink Free", Font.BOLD, 30));
+        saveButton.setBackground(Color.BLUE);
+        saveButton.setFocusable(false);
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                savePlayerScore(textArea.getText());
+                setMenuVisible(true);
+                gameLost=false;
+                frame.dispose();
+            }
+            
+        });
+
+        noButton.setFont(new Font("Ink Free", Font.BOLD, 30));
+        noButton.setBackground(Color.BLUE);
+        noButton.setFocusable(false);
+        noButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setMenuVisible(true);
+                gameLost=false;
+                frame.dispose();
+            }
+            
+        });
+
+        bottomPanel.setLayout(new GridLayout(1, 2));
+        bottomPanel.add(saveButton);
+        bottomPanel.add(noButton);
+
+        panel.setLayout(new GridLayout(3, 1));
+        panel.setPreferredSize(new Dimension(500, 300));
+        panel.add(saveLabel);
+        panel.add(textArea);
+        panel.add(bottomPanel);
+
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setResizable(false);
+        frame.add(panel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     public void checkAppleCollision()
@@ -303,13 +481,28 @@ public class GamePanel extends JPanel
         }
     }
 
+    public void ongoingGame()
+    {
+        moveSnake();
+        repaint();
+        checkBorderCollisions();
+        checkAppleCollision();
+        checkSegmentCollisions();
+    }
+
+    public void startGame()
+    {
+        this.requestFocusInWindow(true);
+        setMenuVisible(false);
+        restart();
+    }
+
     public void lose()
     {
         gameLost=true;
         gameTimer.stop();
+        createSaveFrame();
         repaint();
-        int option = JOptionPane.showConfirmDialog(getComponentPopupMenu(), "Restart?","Tic-Tac-Toe", JOptionPane.YES_NO_OPTION); 
-        if(option==0) restart();
     }
 
     public void restart()
