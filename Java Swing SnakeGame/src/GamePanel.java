@@ -27,6 +27,7 @@ public class GamePanel extends JPanel
     private Timer gameTimer;
     private boolean gameLost = false;
     Color randomColor;
+    //------------Buttons for menu------------
     private JButton startButton = new JButton("Start game");
     private JButton leaderboardButton = new JButton("Leaderboard");
     private JButton exitButton = new JButton("Exit");
@@ -347,8 +348,94 @@ public class GamePanel extends JPanel
     {
         try 
         {
-            PrintWriter out = new PrintWriter(new FileWriter("Scores.txt", true));
-            out.println(nick+";"+score+";"+gameSpeed);
+            BufferedReader in = new BufferedReader(new FileReader("Scores.txt"));
+            in.mark(8192); //for .reset() to work
+            StringTokenizer tokens;
+            String line, tempNick;
+            int tempSpeed, tempScore;
+            int numberOfLines=0;
+            //arrays to store the contents of Scores.txt
+            String []nickFromFile = new String[5];
+            int []speedFromFile = new int[5];
+            int []scoreFromFile = new int[5];
+            
+
+            for(; numberOfLines<5; numberOfLines++) if((line = in.readLine())==null) break;//when there are no more players scores
+            in.reset(); //restarting position of reading lines
+            for(int j=0; j<numberOfLines; j++)
+            {
+                line = in.readLine();
+                tokens = new StringTokenizer(line, ";");
+                nickFromFile[j] = tokens.nextToken();
+                scoreFromFile[j] = Integer.parseInt(tokens.nextToken());
+                speedFromFile[j] = Integer.parseInt(tokens.nextToken());
+            }
+            in.close();
+
+            PrintWriter out = new PrintWriter(new FileWriter("Scores.txt"));
+            if(numberOfLines<5)
+            {
+                scoreFromFile[numberOfLines]=score;
+                nickFromFile[numberOfLines]=nick;
+                speedFromFile[numberOfLines]=gameSpeed;
+                if(numberOfLines>0)
+                {
+                    for(int k=numberOfLines; k>0; k--)
+                    {
+                        if(scoreFromFile[k]>=scoreFromFile[k-1])
+                        {
+                            tempScore=scoreFromFile[k];
+                            tempNick=nickFromFile[k];
+                            tempSpeed=speedFromFile[k];
+
+                            scoreFromFile[k]=scoreFromFile[k-1];
+                            nickFromFile[k]=nickFromFile[k-1];
+                            speedFromFile[k]=speedFromFile[k-1];
+
+                            scoreFromFile[k-1]=tempScore;
+                            nickFromFile[k-1]=tempNick;
+                            speedFromFile[k-1]=tempSpeed;
+                        }
+                        else break;
+                    }
+                }
+
+                for(int k=0; k<=numberOfLines; k++)
+                {
+                    out.println(nickFromFile[k]+";"+scoreFromFile[k]+";"+speedFromFile[k]);
+                }
+                
+            }
+            else if(scoreFromFile[numberOfLines-1]<=score)
+            {
+                scoreFromFile[numberOfLines-1]=score;
+                nickFromFile[numberOfLines-1]=nick;
+                speedFromFile[numberOfLines-1]=gameSpeed;
+
+                for(int k=numberOfLines-1; k>0; k--)
+                {
+                    if(scoreFromFile[k]>=scoreFromFile[k-1])
+                    {
+                        tempScore=scoreFromFile[k];
+                        tempNick=nickFromFile[k];
+                        tempSpeed=speedFromFile[k];
+
+                        scoreFromFile[k]=scoreFromFile[k-1];
+                        nickFromFile[k]=nickFromFile[k-1];
+                        speedFromFile[k]=speedFromFile[k-1];
+
+                        scoreFromFile[k-1]=tempScore;
+                        nickFromFile[k-1]=tempNick;
+                        speedFromFile[k-1]=tempSpeed;
+                    }
+                    else break;
+                }
+                
+                for(int k=0; k<numberOfLines; k++)
+                {
+                    out.println(nickFromFile[k]+";"+scoreFromFile[k]+";"+speedFromFile[k]);
+                }
+            }
             out.close();
         } 
         catch (IOException e) 
@@ -362,16 +449,18 @@ public class GamePanel extends JPanel
         try 
         {
             BufferedReader in = new BufferedReader(new FileReader("Scores.txt"));
-            String line;
+            String line, nickFromFile, scoreFromFile, speedFromFile;
             StringTokenizer tokens;
+
             for(int j=0; j<5; j++)
             {
-                line = in.readLine();
+                if((line = in.readLine())==null) break;//when there are no more players scores
+
                 tokens = new StringTokenizer(line, ";");
-                String nick = tokens.nextToken();
-                String scoreFromFile = tokens.nextToken();
-                String speedFromFile = tokens.nextToken();
-                playerLabels[j].setText(j+1+". "+nick+" score: "+scoreFromFile+" with speed "+speedFromFile);
+                nickFromFile = tokens.nextToken();
+                scoreFromFile = tokens.nextToken();
+                speedFromFile = tokens.nextToken();
+                playerLabels[j].setText(j+1+". "+nickFromFile+" score: "+scoreFromFile+" with speed "+speedFromFile);
             } 
             in.close();
         } 

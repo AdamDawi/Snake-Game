@@ -1,6 +1,3 @@
-dsadas;1;70
-:(;0;40
-pog;1;20
-janek;1;70
-fdfdsfdsfdsdsa;100;100
-gfdgdf;0;90
+Adas;17;70
+Adas;13;60
+Adas;8;50
