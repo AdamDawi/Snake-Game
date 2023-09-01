@@ -4,8 +4,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 public class GamePanel extends JPanel
 {
@@ -351,90 +357,63 @@ public class GamePanel extends JPanel
             BufferedReader in = new BufferedReader(new FileReader("Scores.txt"));
             in.mark(8192); //for .reset() to work
             StringTokenizer tokens;
-            String line, tempNick;
-            int tempSpeed, tempScore;
+            String line, tempNick="";
+            int tempSpeed=0, tempScore=0;
             int numberOfLines=0;
-            //arrays to store the contents of Scores.txt
-            String []nickFromFile = new String[5];
-            int []speedFromFile = new int[5];
-            int []scoreFromFile = new int[5];
+            TreeMap<Integer, ArrayList<HashMap<String, Integer>>> treeScore = new TreeMap<>(Collections.reverseOrder()); //reversed treemap(from the largest to the smallest) for players score, nick and speed
             
-
             for(; numberOfLines<5; numberOfLines++) if((line = in.readLine())==null) break;//when there are no more players scores
-            in.reset(); //restarting position of reading lines
+            in.reset(); //restarting position of reading lines to the start
             for(int j=0; j<numberOfLines; j++)
             {
                 line = in.readLine();
                 tokens = new StringTokenizer(line, ";");
-                nickFromFile[j] = tokens.nextToken();
-                scoreFromFile[j] = Integer.parseInt(tokens.nextToken());
-                speedFromFile[j] = Integer.parseInt(tokens.nextToken());
-            }
+                tempNick = tokens.nextToken();
+                tempScore = Integer.parseInt(tokens.nextToken());
+                tempSpeed = Integer.parseInt(tokens.nextToken());
 
+                if (!treeScore.containsKey(tempScore)) //if tree have this score we make list to store multiple duplicates
+                {
+                    treeScore.put(tempScore, new ArrayList<HashMap<String, Integer>>());
+                }
+
+                HashMap<String, Integer> tempHashMap = new HashMap<>();
+                tempHashMap.put(tempNick, tempSpeed);
+
+                treeScore.get(tempScore).add(tempHashMap);
+            }
+            HashMap<String, Integer> tempHashMap = new HashMap<>();
+            tempHashMap.put(nick, gameSpeed);
+
+            if (!treeScore.containsKey(score)) //if tree have this score we make list to store multiple duplicates
+            {
+                treeScore.put(score, new ArrayList<HashMap<String, Integer>>());
+            }
+            
+            treeScore.get(score).add(tempHashMap);
+            
             in.close();
 
             PrintWriter out = new PrintWriter(new FileWriter("Scores.txt"));
-            if(numberOfLines<5)
+            
+            if(treeScore.size()>=5) numberOfLines=5; //if there is more than 5 scores
+            else numberOfLines+=1;
+            int k=0;
+
+            for(Entry<Integer, ArrayList<HashMap<String, Integer>>> el : treeScore.entrySet())// taking 5 best scores from TreeMap
             {
-                scoreFromFile[numberOfLines]=score;
-                nickFromFile[numberOfLines]=nick;
-                speedFromFile[numberOfLines]=gameSpeed;
-                if(numberOfLines>0)
+                if(k>numberOfLines) break;
+                tempScore=el.getKey();
+
+                for (HashMap<String, Integer> playerScores : el.getValue()) 
                 {
-                    for(int k=numberOfLines; k>0; k--)
+                    for (Map.Entry<String, Integer> pair : playerScores.entrySet()) 
                     {
-                        if(scoreFromFile[k]>=scoreFromFile[k-1])
-                        {
-                            tempScore=scoreFromFile[k];
-                            tempNick=nickFromFile[k];
-                            tempSpeed=speedFromFile[k];
-
-                            scoreFromFile[k]=scoreFromFile[k-1];
-                            nickFromFile[k]=nickFromFile[k-1];
-                            speedFromFile[k]=speedFromFile[k-1];
-
-                            scoreFromFile[k-1]=tempScore;
-                            nickFromFile[k-1]=tempNick;
-                            speedFromFile[k-1]=tempSpeed;
-                        }
-                        else break;
+                        tempNick = pair.getKey();
+                        tempSpeed = pair.getValue();
                     }
-                }
-
-                for(int k=0; k<=numberOfLines; k++)
-                {
-                    out.println(nickFromFile[k]+";"+scoreFromFile[k]+";"+speedFromFile[k]);
-                }
-                
-            }
-            else if(scoreFromFile[numberOfLines-1]<=score)
-            {
-                scoreFromFile[numberOfLines-1]=score;
-                nickFromFile[numberOfLines-1]=nick;
-                speedFromFile[numberOfLines-1]=gameSpeed;
-
-                for(int k=numberOfLines-1; k>0; k--)
-                {
-                    if(scoreFromFile[k]>=scoreFromFile[k-1])
-                    {
-                        tempScore=scoreFromFile[k];
-                        tempNick=nickFromFile[k];
-                        tempSpeed=speedFromFile[k];
-
-                        scoreFromFile[k]=scoreFromFile[k-1];
-                        nickFromFile[k]=nickFromFile[k-1];
-                        speedFromFile[k]=speedFromFile[k-1];
-
-                        scoreFromFile[k-1]=tempScore;
-                        nickFromFile[k-1]=tempNick;
-                        speedFromFile[k-1]=tempSpeed;
-                    }
-                    else break;
-                }
-                
-                for(int k=0; k<numberOfLines; k++)
-                {
-                    out.println(nickFromFile[k]+";"+scoreFromFile[k]+";"+speedFromFile[k]);
+                    if(++k>numberOfLines) break;
+                    out.println(tempNick+";"+tempScore+";"+tempSpeed);
                 }
             }
             out.close();
