@@ -1,15 +1,18 @@
-# Snake-Game
+## Getting Started
 
-This is a desktop Snake game made with Swing.
-### Features:
-- game menu
-- slider to choose game speed
-- leaderboard with the best players score
-- game speed and custom nicks in leaderboard
+Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
 
-### Here are some pictures of the mobile application:
+## Folder Structure
 
-![1](https://github.com/AdamDawi/Snake-Game/assets/49430055/74c5e072-19d7-490f-b93c-059505410031)
-![4](https://github.com/AdamDawi/Snake-Game/assets/49430055/3487e267-0c00-4de3-8ade-dd030076de1e)
-![2](https://github.com/AdamDawi/Snake-Game/assets/49430055/f756fd53-6e0a-4a66-8e45-c2dfff3bff8d)
-![3](https://github.com/AdamDawi/Snake-Game/assets/49430055/4f1f5435-0021-4a2e-90e9-f4f1e344cf25)
+The workspace contains two folders by default, where:
+
+- `src`: the folder to maintain sources
+- `lib`: the folder to maintain dependencies
+
+Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+
+> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+
+## Dependency Management
+
+The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).

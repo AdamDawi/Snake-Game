@@ -1,0 +1,5 @@
+Adam;13;100
+Adam;7;70
+Adam;5;40
+Adam;3;70
+Adam;1;20
